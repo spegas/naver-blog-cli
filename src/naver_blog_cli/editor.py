@@ -1,6 +1,7 @@
 # 원작성자: jjorae <raehyeok.cho@gmail.com> (2026-08-27, 최초 커밋)
 # 이후 대부분 기능 확장: Johnhyeon <whdqja216772@gmail.com>
 # 출처: https://github.com/Johnhyeon/naver-blog-mcp
+# 수정: 송중호 (2026-10-03) — goto_editor 가 에디터 iframe 안의 로그인 페이지를 세션 만료로 판정
 """에디터 구동부. 셀렉터는 전부 selectors.py 에서 가져온다."""
 
 from __future__ import annotations
@@ -79,6 +80,11 @@ async def goto_editor(page: Page, blog_id: str) -> Frame:
         raise EditorError("세션 만료 — uv run python login_setup.py 재실행 필요")
     await wait_for_editor(page)
     frame = await get_editor_frame(page)
+    # 블로그 보기는 되는데 글쓰기만 재로그인을 요구할 때가 있다 (2026-10-03 실측: 로그인
+    # 약 2.5시간 뒤). 그때는 바깥 URL 은 그대로고 에디터 iframe 만 로그인 페이지가 된다.
+    # 확인하지 않으면 "제목 영역을 못 찾음" 같은 엉뚱한 메시지가 나온다.
+    if "nid.naver.com" in frame.url:
+        raise EditorError("세션 만료(글쓰기 재로그인 필요) — uv run python login_setup.py 재실행 필요")
     await dismiss_popups(frame)
     return frame
 

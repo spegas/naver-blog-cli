@@ -3,6 +3,7 @@
 # 출처: https://github.com/Johnhyeon/naver-blog-mcp (원본 파일: server.py)
 # 수정: 송중호 (2026-09-22) — 원본 server.py 의 로직(위 두 명 작성)을 MCP 의존성 없이
 #      그대로 떼어내 이 파일로 옮김. cli.py 가 이 모듈을 직접 호출한다. 로직 자체는 변경 없음.
+# 수정: 송중호 (2026-10-03) — check_session 이 글쓰기 화면까지 열어 재로그인 요구를 잡아낸다.
 """전송 방식(CLI)과 무관한 핵심 로직.
 
 cli.py(터미널)가 이 모듈의 함수를 그대로 호출한다.
@@ -93,7 +94,14 @@ async def check_session() -> str:
             await page.goto(S.MYBLOG_PROBE_URL, wait_until="domcontentloaded")
             if "nid.naver.com" in page.url:
                 return "세션 만료 — uv run python login_setup.py 재실행 필요"
-            return f"세션 정상 ({page.url})"
+            blog_url = page.url
+            # 보기는 되는데 글쓰기만 재로그인을 요구할 수 있어서 글쓰기 화면도 열어 본다.
+            if BLOG_ID:
+                try:
+                    await goto_editor(page, BLOG_ID)
+                except EditorError as e:
+                    return f"보기는 되지만 글쓰기 불가 — {e}"
+            return f"세션 정상 ({blog_url}{', 글쓰기 가능' if BLOG_ID else ''})"
     except Exception as e:
         return f"확인 실패: {e}"
 

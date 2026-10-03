@@ -140,7 +140,10 @@ def find_place(name: str, region: str = "") -> tuple[str, list[Hit]]:
         named = [h for h in search("local", name, 5) if key in _norm(h.title) or _norm(h.title) in key]
     if named and (not rkey or any(rkey in h.address for h in named)):
         return "found", [h for h in named if not rkey or rkey in h.address]
-    other = search("webkr", f'"{name}"', 5) + search("blog", f"{region} {name}".strip(), 5)
+    # 따옴표(정확히 일치) 검색만 하면 '금강 종주 자전거길' 같은 실제 이름을 놓친다
+    # (2026-10-03 실측). 따옴표 없는 검색도 함께 본다.
+    other = (search("webkr", f'"{name}"', 5) + search("webkr", name, 5)
+             + search("blog", f"{region} {name}".strip(), 5))
     hit = [h for h in other if key in _norm(h.title + h.desc)]
     # 이름이 다른 지역 업체와 겹칠 수 있다 (예: '금강수목원' → 서울의 '금강수목원아파트').
     # 그 지역과 함께 언급된 글이 있으면 다른 지역이라고 단정하지 않는다.
