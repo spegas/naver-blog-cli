@@ -1,6 +1,15 @@
-# naver-blog-mcp
+# naver-blog-cli
 
-네이버 블로그에 **서식·이미지·표·수식·장소가 들어간 글**을 쓰는 MCP 서버.
+> 원작성자: jjorae \<raehyeok.cho@gmail.com\> (최초 커밋, 2026-08-27) /
+> Johnhyeon \<whdqja216772@gmail.com\> (기능 확장) —
+> 원본 저장소: [github.com/Johnhyeon/naver-blog-mcp](https://github.com/Johnhyeon/naver-blog-mcp)
+> (그 원본: [github.com/jjorae/naver-blog-mcp](https://github.com/jjorae/naver-blog-mcp)) — MIT 라이선스
+>
+> 수정: 송중호 (2026-09-22) — MCP 서버(`server.py`) 제거, `core.py` + `cli.py` 구조로
+> 변경해 MCP 클라이언트 없이 터미널에서 바로 쓰도록 만듦. 폴더/패키지명도
+> `naver-blog-mcp` → `naver-blog-cli` 로 변경 (mcp 단어 제거). 기능 로직 자체는 그대로다.
+
+네이버 블로그에 **서식·이미지·표·수식·장소가 들어간 글**을 쓰는 CLI.
 Playwright로 스마트에디터 ONE을 직접 조작합니다.
 
 마크다운을 주면 임시저장까지 해주고, 발행은 별도 툴로 분리돼 있습니다.
@@ -42,14 +51,29 @@ Playwright로 스마트에디터 ONE을 직접 조작합니다.
 - [uv](https://docs.astral.sh/uv/)
 - 네이버 블로그 계정
 
-## 설치
+## 설치 (가상환경)
 
 ```bash
 git clone <이 저장소>
-cd naver-blog-mcp
-uv sync
-uv run playwright install chromium
+cd naver-blog-cli
+uv sync                          # .venv 를 만들고 의존성(playwright 등)을 설치
+uv run playwright install chromium   # Playwright 가 쓰는 Chromium 브라우저 설치
 ```
+
+`uv sync`가 프로젝트 폴더 안에 `.venv/`(가상환경)를 **자동으로 생성**합니다.
+따로 `python -m venv` 를 만들 필요가 없습니다. 두 가지 방식으로 쓸 수 있습니다:
+
+- **`uv run <명령>`** — 가상환경을 활성화하지 않고 그때그때 그 안에서 실행 (권장, 아래 예시가 전부 이 방식).
+- **직접 활성화** — 한 셸에서 여러 명령을 계속 칠 때 편합니다.
+  ```bash
+  source .venv/bin/activate    # 이후 uv run 없이 naver-blog-cli, python 을 바로 씀
+  naver-blog-cli --help
+  deactivate                   # 빠져나오기
+  ```
+
+새 의존성이 `pyproject.toml`에 추가되면 `uv sync`를 다시 돌리면 됩니다 — `.venv`를 지우고
+새로 만들 필요는 없습니다(단, 폴더 경로 자체를 옮겼다면 `.venv`가 옛 경로를 참조하므로
+`rm -rf .venv && uv sync`로 다시 만드세요).
 
 ## 로그인 (최초 1회)
 
@@ -59,44 +83,32 @@ uv run python login_setup.py
 
 브라우저가 열리면 **직접 로그인**하고 본인 블로그 홈까지 이동한 뒤 터미널에서 엔터를 치세요.
 CAPTCHA·2차인증·기기등록은 전부 사람이 처리합니다.
-쿠키가 `playwright-state/storage_state.json`에 저장되고, 서버는 그 파일만 읽습니다.
+쿠키가 `playwright-state/storage_state.json`에 저장되고, CLI는 그 파일만 읽습니다.
 
 세션이 만료되면 이 명령을 다시 실행하면 됩니다.
 
-## MCP 등록
-
-### Claude Code
+## CLI 사용법
 
 ```bash
-claude mcp add naver-blog \
-  -e NAVER_BLOG_ID=<블로그아이디> \
-  -e NAVER_STATE=/절대경로/naver-blog-mcp/playwright-state/storage_state.json \
-  -- /절대경로/naver-blog-mcp/.venv/bin/naver-blog-mcp
+export NAVER_BLOG_ID=<블로그아이디>
+
+uv run naver-blog-cli check-session
+uv run naver-blog-cli list-categories
+uv run naver-blog-cli list-drafts
+
+# 마크다운 파일로 임시저장 (발행하지 않음)
+uv run naver-blog-cli create-draft --title "제목" --file post.md --category 여행 --tags 여행,세종시
+
+# 글+이미지가 한 폴더에 있을 때
+uv run naver-blog-cli create-draft-from-folder ./내글폴더
+
+# 발행/삭제는 되돌릴 수 없어서 --confirm 을 반드시 붙여야 합니다
+uv run naver-blog-cli publish-draft --confirm --title "제목"
+uv run naver-blog-cli delete-draft --confirm --title "제목"
+uv run naver-blog-cli delete-post --confirm <글URL 또는 글번호>
 ```
 
-### Claude Desktop
-
-`~/Library/Application Support/Claude/claude_desktop_config.json`
-(Windows: `%APPDATA%\Claude\claude_desktop_config.json`)
-
-```json
-{
-  "mcpServers": {
-    "naver-blog": {
-      "command": "/절대경로/naver-blog-mcp/.venv/bin/naver-blog-mcp",
-      "env": {
-        "NAVER_BLOG_ID": "<블로그아이디>",
-        "NAVER_STATE": "/절대경로/naver-blog-mcp/playwright-state/storage_state.json"
-      }
-    }
-  }
-}
-```
-
-저장 후 Claude Desktop을 완전히 종료(Cmd+Q)했다가 다시 켜세요.
-
-> **경로는 반드시 절대경로로.** GUI 앱은 셸 PATH를 물려받지 않고 작업 디렉터리도 다릅니다.
-> `NAVER_STATE`를 생략하면 기본값이 상대경로라 세션 파일을 못 찾습니다.
+`--help`로 각 명령의 전체 옵션을 볼 수 있습니다 (`uv run naver-blog-cli create-draft --help`).
 
 ### 환경변수
 
@@ -110,21 +122,21 @@ claude mcp add naver-blog \
 `HEADLESS` 기본값이 `false`인 건 의도입니다 — CAPTCHA가 뜨면 사람이 풀어야 하니까요.
 `true`로 두면 그런 상황에서 조용히 실패합니다.
 
-## 툴
+## 명령 (core.py 의 함수, cli.py 가 그대로 호출)
 
-| 툴 | 설명 |
-|---|---|
-| `check_session()` | 세션이 살아있는지 확인 |
-| `list_categories()` | 카테고리 목록 (하위 카테고리는 들여쓰기) |
-| `list_drafts()` | 임시저장 글 목록 |
-| `create_draft(title, markdown, category, tags)` | 글을 쓰고 **임시저장**. 발행하지 않음 |
-| `publish_draft(confirm, title, visibility)` | 임시저장 글을 불러와 발행 |
-| `delete_draft(confirm, title)` | 임시저장 글 삭제 |
-| `delete_post(url_or_log_no, confirm)` | 발행된 글 삭제 |
+| CLI 명령 | core.py 함수 | 설명 |
+|---|---|---|
+| `check-session` | `check_session()` | 세션이 살아있는지 확인 |
+| `list-categories` | `list_categories()` | 카테고리 목록 (하위 카테고리는 들여쓰기) |
+| `list-drafts` | `list_drafts()` | 임시저장 글 목록 |
+| `create-draft` | `create_draft(title, markdown, category, tags)` | 글을 쓰고 **임시저장**. 발행하지 않음 |
+| `publish-draft` | `publish_draft(confirm, title, visibility)` | 임시저장 글을 불러와 발행 |
+| `delete-draft` | `delete_draft(confirm, title)` | 임시저장 글 삭제 |
+| `delete-post` | `delete_post(url_or_log_no, confirm)` | 발행된 글 삭제 |
 
 기본 흐름은 **임시저장 → 눈으로 확인 → 발행**입니다.
 
-파괴적인 툴(`publish_draft`, `delete_draft`, `delete_post`)은 `confirm=True`를 요구합니다.
+파괴적인 명령(`publish-draft`, `delete-draft`, `delete-post`)은 `--confirm`을 요구합니다.
 앞의 둘은 대상이 애매하면(제목이 여러 글과 맞거나, 지정 없이 임시저장이 2건 이상)
 거부하고 후보를 보여줍니다.
 
@@ -175,18 +187,20 @@ HEADLESS=true uv run python verify_selectors.py   # 창 없이
 `MISS`가 있으면 `dom_probe.txt`(클릭·입력 가능한 요소 목록)와 `dom_dump.html`을 남기니,
 그걸 보고 `selectors.py`만 고치면 됩니다.
 
-**셀렉터 문자열은 전부 `src/naver_blog_mcp/selectors.py` 한 파일에 있습니다.**
+**셀렉터 문자열은 전부 `src/naver_blog_cli/selectors.py` 한 파일에 있습니다.**
 다른 파일에는 두지 마세요.
 
 ## 구조
 
 ```
-src/naver_blog_mcp/
+src/naver_blog_cli/
   selectors.py   셀렉터 격리 구역. 네이버가 바뀌면 여기만 고친다
   ir.py          마크다운 → 블록 IR → HTML. 붙여넣기 가능/불가능 라우팅
   editor.py      에디터 구동부 (붙여넣기, 업로드, 툴바 조작)
   session.py     쿠키 로드/저장. 비밀번호는 다루지 않는다
-  server.py      MCP 툴 정의
+  material.py    글감(뉴스·증권·책) 카드 고르기
+  core.py        핵심 로직 (전송 방식과 무관, MCP 의존 없음)
+  cli.py         터미널 진입점. core.py 를 그대로 호출
 login_setup.py   최초 1회 사람이 직접 로그인
 verify_selectors.py  셀렉터 진단
 ```
@@ -204,9 +218,21 @@ verify_selectors.py  셀렉터 진단
 `aria-label`) → 클래스 접두 → 난독화 클래스 순서로 둡니다. 네이버의 난독화 클래스는
 해시만 도는 경우가 많아 `class*=` 접두 매칭이 잘 견딥니다.
 
-## 라이선스
+## 출처와 라이선스
 
-MIT — [LICENSE](LICENSE)
+이 프로젝트는 아래 저장소의 코드를 바탕으로 수정한 것입니다.
+
+- **참고·기반 저장소: [Johnhyeon/naver-blog-mcp](https://github.com/Johnhyeon/naver-blog-mcp)**
+  — Johnhyeon \<whdqja216772@gmail.com\> (기능 확장)
+- 그 원본: [jjorae/naver-blog-mcp](https://github.com/jjorae/naver-blog-mcp)
+  — jjorae \<raehyeok.cho@gmail.com\> (최초 작성)
+
+원본은 [MIT 라이선스](LICENSE)이며, 이 저장소도 같은 MIT 라이선스로 배포합니다.
+MIT 조건에 따라 원저작자의 저작권 표시와 허가 문구를 [LICENSE](LICENSE)에 그대로 유지했습니다.
+원본의 git 커밋 기록도 지우지 않고 그대로 이어받았습니다.
+
+이 저장소에서 바꾼 것(송중호, 2026-09-22): MCP 서버(`server.py`) 제거,
+`core.py` + `cli.py` 구조의 CLI로 변경, 패키지명 `naver_blog_mcp` → `naver_blog_cli`.
 
 ## 이 포크에서 더한 것 (Johnhyeon)
 

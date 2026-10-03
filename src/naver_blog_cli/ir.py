@@ -1,3 +1,6 @@
+# 원작성자: jjorae <raehyeok.cho@gmail.com> (2026-08-27, 최초 커밋)
+# 이후 대부분 기능 확장: Johnhyeon <whdqja216772@gmail.com>
+# 출처: https://github.com/Johnhyeon/naver-blog-mcp
 """본문 중간표현(IR).
 
 마크다운 -> IR -> (HTML 클립보드 | 키스트로크) 두 경로로 갈라진다.

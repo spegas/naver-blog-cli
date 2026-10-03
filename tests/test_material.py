@@ -1,10 +1,12 @@
+# 원작성자: Johnhyeon <whdqja216772@gmail.com> (2026-09-16)
+# 출처: https://github.com/Johnhyeon/naver-blog-mcp
 """글감 카드 고르기 테스트. 엉뚱한 카드를 넣지 않는 것이 핵심이다."""
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
-from naver_blog_mcp.ir import parse_markdown  # noqa: E402
-from naver_blog_mcp.material import best_match, fallback_text, queries, split_layout  # noqa: E402
+from naver_blog_cli.ir import parse_markdown  # noqa: E402
+from naver_blog_cli.material import best_match, fallback_text, queries, split_layout  # noqa: E402
 
 NEWS = [
     ("\"통신장비 부족해\"…대한광통신 14% 쑥", "매일경제"),

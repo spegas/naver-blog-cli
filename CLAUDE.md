@@ -1,15 +1,24 @@
-# naver-blog-mcp
+# naver-blog-cli
 
-네이버 블로그에 서식·이미지 포함 글을 작성하는 MCP 서버. Playwright 기반.
+> 원작성자: jjorae <raehyeok.cho@gmail.com> (최초 커밋, 2026-08-27) /
+> Johnhyeon <whdqja216772@gmail.com> (기능 확장) —
+> 원본 저장소: https://github.com/Johnhyeon/naver-blog-mcp
+>
+> 수정: 송중호 (2026-09-22) — MCP 서버(`server.py`) 제거, `core.py`(로직) + `cli.py`(터미널
+> 진입점) 구조로 변경. 폴더/패키지명도 `naver-blog-mcp` → `naver-blog-cli` 로 변경.
+> 아래 개발 기록은 대부분 `server.py`/`naver_blog_mcp` 시절에 쓰인 것이라 그 이름이
+> 남아 있는 곳이 있다 — 지금은 같은 로직이 `core.py`/`naver_blog_cli`에 있다고 읽으면 된다.
+
+네이버 블로그에 서식·이미지 포함 글을 작성하는 CLI. Playwright 기반.
 
 ## 지켜야 할 설계 결정
 
 이 결정들은 이유가 있어서 내린 것이다. 바꾸려면 먼저 물어볼 것.
 
 1. **비밀번호를 저장하지 않는다.** `login_setup.py`로 사람이 직접 로그인해
-   `playwright-state/storage_state.json`에 쿠키만 덤프한다. 서버는 그 파일만 읽는다.
-   CAPTCHA·2차인증은 사람이 처리한다. 로그인 자동화 코드를 추가하지 말 것 —
-   봇 탐지에 걸리는 표면이자 계정 제재 리스크다.
+   `playwright-state/storage_state.json`에 쿠키만 덤프한다. `core.py`(CLI가 호출하는
+   로직)는 그 파일만 읽는다. CAPTCHA·2차인증은 사람이 처리한다. 로그인 자동화 코드를
+   추가하지 말 것 — 봇 탐지에 걸리는 표면이자 계정 제재 리스크다.
 
 2. **셀렉터는 `selectors.py`에만 둔다.** 다른 파일에 셀렉터 문자열을 하드코딩하지 말 것.
    각 항목은 후보 리스트이고 `S.first()`가 위에서부터 시도한다.
@@ -43,9 +52,10 @@
   `data-testid` / `data-name` / `data-a11y-title` 가 가장 오래 간다. 텍스트 매칭은
   마지막에, 그것도 컨테이너로 스코프를 좁힌 뒤에만.
 - `editor.py` — 발행 레이어 헬퍼 추가. macOS 단축키(`ControlOrMeta`) 반영.
-- `server.py` — mcp 2.0 (`MCPServer`) 기준. 툴 6개:
+- `core.py` — MCP 의존성 없는 핵심 로직 (2026-09-22, 원래 `server.py`였던 것을 옮김). 함수 7개:
   `check_session` / `list_categories` / `list_drafts` /
   `create_draft` / `delete_draft` / `publish_draft` / `delete_post`.
+- `cli.py` — 위 함수들을 터미널에서 바로 호출하는 `argparse` 진입점 (2026-09-22 신규).
 
 ### 고친 것
 
@@ -285,7 +295,8 @@
   이건 우회할 수 없는 네이버 제약이지 우리 선택이 아니다.
 - `se-cover-*` 클래스는 **제목 배경 사진**이지 대표 이미지가 아니다. 이름이 비슷해 헷갈리기 쉽다.
 - 구현: `editor.set_rep_image()` / `editor.rep_image_index()`,
-  `server.find_cover()` (기본 `images/00-cover.*`, `NAVER_COVER` 로 변경·해제),
+  `core.find_cover()` (2026-09-22 이전에는 `server.find_cover()`였다. 기본
+  `images/00-cover.*`, `NAVER_COVER` 로 변경·해제),
   `write_post(cover=...)` 가 본문 맨 앞에 넣는다. 표지에는 캡션을 넣지 않는다 —
   글자가 이미 그림에 그려져 있어 아래에 한 줄 더 붙으면 제목이 두 번 나온다.
 

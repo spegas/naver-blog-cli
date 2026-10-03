@@ -1,3 +1,6 @@
+# 원작성자: jjorae <raehyeok.cho@gmail.com> (2026-08-27, 최초 커밋)
+# 이후 대부분 기능 확장: Johnhyeon <whdqja216772@gmail.com>
+# 출처: https://github.com/Johnhyeon/naver-blog-mcp
 """셀렉터 실측 스크립트. 코드 짜기 전에 이걸 먼저 돌린다.
 
 에디터를 열고 selectors.py 의 후보들이 실제로 잡히는지 하나씩 확인한 뒤,
@@ -19,9 +22,9 @@ import asyncio
 import os
 import sys
 
-from src.naver_blog_mcp import selectors as S
-from src.naver_blog_mcp.session import Session
-from src.naver_blog_mcp.editor import get_editor_frame, dismiss_popups, wait_for_editor
+from src.naver_blog_cli import selectors as S
+from src.naver_blog_cli.session import Session
+from src.naver_blog_cli.editor import get_editor_frame, dismiss_popups, wait_for_editor
 
 BLOG_ID = os.getenv("NAVER_BLOG_ID", "")
 # 프로브에 추가로 포함할 셀렉터 (셀렉터는 selectors.py 에서 가져온다)

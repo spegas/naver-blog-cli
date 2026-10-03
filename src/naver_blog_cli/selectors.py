@@ -1,3 +1,6 @@
+# 원작성자: jjorae <raehyeok.cho@gmail.com> (2026-08-27, 최초 커밋)
+# 이후 대부분 기능 확장: Johnhyeon <whdqja216772@gmail.com>
+# 출처: https://github.com/Johnhyeon/naver-blog-mcp
 """셀렉터 격리 구역.
 
 네이버가 에디터를 바꾸면 여기만 고친다. 다른 파일에는 셀렉터 문자열을 두지 않는다.

@@ -1,3 +1,5 @@
+# 원작성자: Johnhyeon <whdqja216772@gmail.com> (2026-09-16)
+# 출처: https://github.com/Johnhyeon/naver-blog-mcp
 """글감(뉴스, 증권, 책) 카드 고르기. 브라우저 없이 도는 부분만 담는다.
 
 마크다운 디렉티브

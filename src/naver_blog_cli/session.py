@@ -1,7 +1,10 @@
+# 원작성자: jjorae <raehyeok.cho@gmail.com> (2026-08-27, 최초 커밋)
+# 이후 대부분 기능 확장: Johnhyeon <whdqja216772@gmail.com>
+# 출처: https://github.com/Johnhyeon/naver-blog-mcp
 """세션 관리. 비밀번호는 어디에도 저장하지 않는다.
 
 login_setup.py 로 사람이 직접 로그인 -> storage_state.json 에 쿠키만 덤프.
-서버는 그 파일만 로드한다. 만료되면 login_setup.py 를 다시 돌린다.
+core.py/cli.py 는 그 파일만 로드한다. 만료되면 login_setup.py 를 다시 돌린다.
 """
 
 from __future__ import annotations

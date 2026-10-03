@@ -1,3 +1,5 @@
+# 원작성자: jjorae <raehyeok.cho@gmail.com> (2026-08-27)
+# 출처: https://github.com/Johnhyeon/naver-blog-mcp
 """최초 1회. 사람이 직접 로그인하고 쿠키만 덤프한다.
 
 CAPTCHA, 2차인증, 기기등록 전부 사람이 처리한다.
@@ -13,7 +15,7 @@ from playwright.async_api import async_playwright
 # 서버와 같은 경로를 쓴다. 예전에는 여기만 하드코딩돼 있어서, NAVER_STATE 를 설정하면
 # 로그인은 성공하는데 서버는 다른 곳을 보는 바람에 "세션 파일 없음" 이 떴다.
 sys.path.insert(0, str(Path(__file__).parent / "src"))
-from naver_blog_mcp.session import STATE as OUT, save_state_file
+from naver_blog_cli.session import STATE as OUT, save_state_file
 
 
 AUTH = {"NID_AUT", "NID_SES"}

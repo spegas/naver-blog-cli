@@ -1,3 +1,6 @@
+# 원작성자: Johnhyeon <whdqja216772@gmail.com> (2026-09-18)
+# 출처: https://github.com/Johnhyeon/naver-blog-mcp
+# 수정: 송중호 (2026-09-22) — find_cover 가 server.py 에서 core.py 로 옮겨져 import 경로만 변경
 """표지(대표 이미지) 고르기 테스트.
 
 핵심은 두 가지다. 표지를 찾아내는 것, 그리고 본문이 이미 쓰고 있으면 두 번 넣지 않는 것.
@@ -9,7 +12,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
-from naver_blog_mcp.server import find_cover  # noqa: E402
+from naver_blog_cli.core import find_cover  # noqa: E402
 
 
 @pytest.fixture

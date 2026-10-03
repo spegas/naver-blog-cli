@@ -1,3 +1,7 @@
+# 원작성자: Johnhyeon <whdqja216772@gmail.com> (2026-09-16)
+# 출처: https://github.com/Johnhyeon/naver-blog-mcp
+# 수정: 송중호 (2026-09-22) — find_cover/preflight/read_meta/split_title 이 server.py 에서
+#      core.py 로 옮겨져 import 경로만 변경
 """글 폴더(post.md, meta.json, images/)를 네이버에 넣고 점검한 뒤 임시저장한다. 원하면 예약 발행까지.
 
     uv run python scripts/draft_folder.py <글 폴더>
@@ -33,16 +37,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from naver_blog_mcp import selectors as S  # noqa: E402
-from naver_blog_mcp.editor import (  # noqa: E402
+from naver_blog_cli import selectors as S  # noqa: E402
+from naver_blog_cli.editor import (  # noqa: E402
     EditorError, close_draft_list, close_publish_panel, delete_draft, draft_count, get_editor_frame, goto_editor,
     list_drafts, open_publish_panel, rep_image_index, reserved_count, set_category,
     set_reservation, set_rep_image, set_tags, set_topic,
     set_visibility,
     write_post,
 )
-from naver_blog_mcp.server import find_cover, preflight, read_meta, split_title  # noqa: E402
-from naver_blog_mcp.session import Session, snapshot  # noqa: E402
+from naver_blog_cli.core import find_cover, preflight, read_meta, split_title  # noqa: E402
+from naver_blog_cli.session import Session, snapshot  # noqa: E402
 
 KST = dt.timezone(dt.timedelta(hours=9))
 

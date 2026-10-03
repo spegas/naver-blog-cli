@@ -1,3 +1,6 @@
+# 원작성자: jjorae <raehyeok.cho@gmail.com> (2026-08-27, 최초 커밋)
+# 이후 대부분 기능 확장: Johnhyeon <whdqja216772@gmail.com>
+# 출처: https://github.com/Johnhyeon/naver-blog-mcp
 """에디터 구동부. 셀렉터는 전부 selectors.py 에서 가져온다."""
 
 from __future__ import annotations
