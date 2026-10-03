@@ -98,6 +98,15 @@ uv run naver-blog-cli list-drafts
 
 # 마크다운 파일로 임시저장 (발행하지 않음)
 uv run naver-blog-cli create-draft --title "제목" --file post.md --category 여행 --tags 여행,세종시
+# 글 첫 줄이 '# 제목' 이면 --title 생략 가능 (그 줄은 본문에서 빠짐)
+uv run naver-blog-cli create-draft --file post.md --category 여행
+
+# 로컬 LLM(Ollama)으로 자료 문장+키워드 → 원고 생성 → 임시저장
+uv run naver-blog-cli ai-draft --keywords 세종시,가을,산책 --category 휴식
+# 네이버 검색으로 자료 수집 + 쓴 뒤 사실 확인 (문제 있으면 올리지 않음)
+uv run naver-blog-cli ai-draft --keywords 세종시,가을,산책 --search --verify --category 휴식
+# 이미 있는 원고만 사실 확인
+uv run naver-blog-cli verify-draft post.md --region 세종시
 
 # 글+이미지가 한 폴더에 있을 때
 uv run naver-blog-cli create-draft-from-folder ./내글폴더
@@ -119,8 +128,81 @@ uv run naver-blog-cli delete-post --confirm <글URL 또는 글번호>
 | `HEADLESS` | `false` | `true`면 브라우저 창을 띄우지 않음 |
 | `NAVER_COVER` | `images/00-cover.*` | 대표 이미지로 쓸 표지 파일. `0`/`off` 면 넣지 않음 |
 
+| `NAVER_LLM_MODEL` | `qwen3.6:27b` | `ai-draft` 가 쓸 Ollama 모델 |
+| `OLLAMA_HOST` | `http://localhost:11434` | Ollama 주소 |
+| `NAVER_CLIENT_ID` | - | `--search`/`--verify` 용 네이버 검색 API(NAVER API HUB) Client ID |
+| `NAVER_CLIENT_SECRET` | - | 같은 키의 Client Secret. **코드·저장소에 넣지 말고 환경변수로만** |
+
 `HEADLESS` 기본값이 `false`인 건 의도입니다 — CAPTCHA가 뜨면 사람이 풀어야 하니까요.
 `true`로 두면 그런 상황에서 조용히 실패합니다.
+
+## 로컬 LLM으로 원고 만들기 (`ai-draft`)
+
+> 추가: 송중호 (2026-10-03) — `src/naver_blog_cli/llm.py`, `cli.py` 의 `ai-draft`
+
+자료 문장과 키워드를 주면 로컬 [Ollama](https://ollama.com) 모델이 마크다운 원고를 쓰고,
+그 원고를 그대로 임시저장합니다. 외부 API·추가 패키지 없이 Ollama HTTP API만 씁니다.
+
+```bash
+ollama pull qwen3.6:27b        # 최초 1회 (약 17GB). latest 태그는 35B(24GB)라 :27b 지정
+
+# 대화형: 자료 문장과 키워드를 차례로 물어봄 (자료 입력은 빈 줄에서 엔터 두 번으로 끝)
+uv run naver-blog-cli ai-draft --category 휴식
+
+# 자료를 파일로
+uv run naver-blog-cli ai-draft --file 자료.md --keywords 세종시,추석연휴 --category 휴식 \
+    --request "가족 나들이 위주로" --length 1500
+
+# 원고만 만들고 올리지 않기 → drafts/ 에서 고친 뒤 create-draft 로 올림
+uv run naver-blog-cli ai-draft --text "..." --keywords 세종시 --dry-run
+uv run naver-blog-cli create-draft --file drafts/20261003-151816_제목.md --category 휴식
+```
+
+### 네이버 검색으로 자료 수집·사실 확인 (`--search`, `--verify`, `verify-draft`)
+
+> 추가: 송중호 (2026-10-03) — `search.py`, `verify.py`
+
+```bash
+uv run naver-blog-cli ai-draft --keywords 세종시,가을,산책코스 --search --verify --region 세종시 --category 휴식
+uv run naver-blog-cli verify-draft drafts/원고.md --region 세종시
+```
+
+- `--search`: 쓰기 전에 키워드로 네이버 뉴스·웹문서·블로그를 5건씩 검색해 자료로 넘깁니다.
+  자료 없이 쓰면 장소를 지어내지만, 검색 결과를 자료로 주면 크게 줄어듭니다.
+- `--verify`: 쓴 뒤 모델이 원고에서 장소와 사실 문장을 뽑고, 네이버 검색으로 확인해
+  `drafts/…_확인.md` 보고서를 만듭니다. **문제(❌)가 하나라도 있으면 임시저장하지 않습니다**
+  (`--upload-anyway` 로 무시). 원고를 자동으로 고치지는 않습니다.
+  - 장소: 지역 검색 → 웹문서·블로그 순. ✅ 그 지역에 있음 / 🟡 웹·블로그 언급만 (산책로·다리 등)
+    / ❌ 다른 지역에만 있음 / ❌ 어디에도 없음. 이 판정은 LLM 없이 검색 결과로만 합니다.
+  - 사실: 뉴스·웹문서 검색 결과를 모델에게 보여주고 ✅ 근거 있음 / ⚠️ 확인 불가 / ❌ 다름 판정.
+    같은 로컬 모델이 판단하므로 참고용입니다.
+- 실측(2026-10-03): 자료 없이 쓴 원고의 지어낸 장소 4곳(`서수원호수공원`, `전의호수공원` 등)을 모두 ❌ 로 잡았습니다.
+
+네이버 검색 API 는 2026년에 개발자센터(openapi.naver.com)에서 **NAVER API HUB**(네이버클라우드)로
+옮겨졌습니다. 키는 네이버클라우드 콘솔 > AI·NAVER API > Application 에서 검색 API 를 골라 받습니다
+(Client ID 10자, Secret 40자). 주소는 `https://naverapihub.apigw.ntruss.com/search/v1/…`, 헤더는
+`X-NCP-APIGW-API-KEY-ID` / `X-NCP-APIGW-API-KEY` 입니다.
+
+google.com 은 쓰지 않습니다. curl 로는 자바스크립트 요구 페이지만 오고, Playwright 로는 첫 요청부터
+캡차(`/sorry/`)로 막혔습니다(2026-10-03 실측). 약관상 자동 수집도 금지입니다.
+
+동작 순서:
+
+1. 모델 호출 (`/api/chat`, `think: false`). 답을 받으면 바로 모델을 메모리에서 내림(`keep_alive: 0`) —
+   이어서 브라우저를 띄우므로 32GB 맥에서 메모리를 비워두려는 것.
+2. 코드펜스·`<think>` 제거, 끝의 해시태그 줄은 본문에서 떼어 태그로 돌림.
+3. `drafts/날짜_제목.md` 로 저장 (`drafts/` 는 `.gitignore` 대상).
+4. 키워드 + `--tags` + 모델이 붙인 해시태그를 합쳐 태그로, 첫 줄 `# 제목` 을 제목으로 임시저장.
+
+주의:
+
+- **로컬 모델은 사실을 지어냅니다.** 2026-10-03 실측에서 자료 없이 "세종시 산책 코스"를 시키자
+  수원의 공원 이름을 썼습니다. 프롬프트가 "자료에 있는 사실만" 쓰도록 묶지만, 장소·날짜·요금은
+  **자료로 직접 주고**, 발행 전에 꼭 확인하세요.
+- 한자·일본어 글자가 섞이면(예: `번华中`, `あっ`) 그 문장만 모델에게 다시 쓰게 해 고칩니다.
+  섞인 글자를 보여주면 모델이 그대로 따라 써서, 그 자리를 빈칸(＿＿)으로 바꿔 문맥으로 채우게 합니다.
+  괄호 안 병기(`세종오식(世宗五食)`)는 건드리지 않습니다. 뜻이 조금 바뀔 수 있으니 확인하세요.
+- M2 Max 32GB 실측: qwen3.6:27b 약 12 tok/s, 원고 한 편 1~2분, 최대 메모리 약 28GB.
 
 ## 명령 (core.py 의 함수, cli.py 가 그대로 호출)
 

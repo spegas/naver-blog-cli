@@ -10,3 +10,7 @@ __pycache__/
 *.py[cod]
 .venv/
 .env
+
+# LLM 이 만든 원고 (개인 글, 사실 확인 전)
+drafts/
+.DS_Store
